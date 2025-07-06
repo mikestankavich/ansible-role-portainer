@@ -1,4 +1,3 @@
----
 - name: Get Endpoints
   uri:
     url: "{{ portainer_endpoint }}/endpoints"
@@ -8,9 +7,19 @@
       Authorization: Bearer {{ (auth_token.content|from_json).jwt }}
   register: portainer_known_endpoints_raw
 
-- name: Save endpoints as fact
+- name: Save endpoint names as fact (for existence checks)
   set_fact:
     portainer_known_endpoints: "{{ portainer_known_endpoints_raw.json | map(attribute='Name') | list }}"
+
+- name: Build initial endpoint name → ID list
+  set_fact:
+    portainer_endpoint_ids: >-
+      {{
+        portainer_known_endpoints_raw.json
+        | map('extract', ['Name', 'Id'])
+        | map('community.general.dict_kv', 'name', 'id')
+        | list
+      }}
 
 - name: "Show known endpoints"
   debug: msg="{{ portainer_known_endpoints }}"
@@ -39,6 +48,19 @@
 - name: Verifying calls
   fail:
     msg: "Could not add endpoint: {{ item.item.name }}"
-  when: item.stdout is defined and (item.stdout|from_json).err is defined
+  when: item.stdout is defined and (item.stdout | from_json).err is defined
   with_items:
     - "{{ response.results }}"
+
+- name: Merge newly created endpoints into portainer_endpoint_ids
+  set_fact:
+    portainer_endpoint_ids: "{{ portainer_endpoint_ids + [ { 'name': item.item.name, 'id': (item.stdout | from_json).Id }] }}"
+  when:
+    - item.stdout is defined
+    - (item.stdout | from_json).Id is defined
+  with_items:
+    - "{{ response.results }}"
+
+- name: Show resolved endpoint IDs
+  debug:
+    var: portainer_endpoint_ids

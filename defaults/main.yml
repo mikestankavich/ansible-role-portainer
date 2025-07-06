@@ -58,3 +58,12 @@ registry_auth: false
 registry_type: 3
 registry_username: username
 registry_password: password
+
+# Add Portainer stacks (optional)
+portainer_stacks:
+  - name: http-echo
+    compose_src: templates/http-echo-compose.yml.j2
+    env:
+      echo_text: "Hello from Molecule!"
+    environment_name: local
+    force_redeploy: false

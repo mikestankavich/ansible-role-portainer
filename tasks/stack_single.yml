@@ -1,0 +1,53 @@
+- name: Resolve endpoint ID from environment_name
+  set_fact:
+    endpoint_id: "{{ portainer_endpoint_ids | selectattr('name', 'equalto', item.environment_name) | map(attribute='id') | first }}"
+
+- name: Get list of existing stacks
+  uri:
+    url: "{{ portainer_url }}/api/stacks"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ portainer_token }}"
+    return_content: true
+  register: existing_stacks
+
+- name: Set stack_id if stack exists
+  set_fact:
+    existing_stack_id: >-
+      {{
+        (existing_stacks.json | selectattr('Name', 'equalto', item.name) | list | first).Id
+        if (existing_stacks.json | selectattr('Name', 'equalto', item.name) | list | length) > 0
+        else None
+      }}
+
+- name: Template the docker-compose file
+  template:
+    src: "{{ item.compose_src }}"
+    dest: "/tmp/{{ item.name }}.yml"
+
+- name: Create environment file for stack
+  copy:
+    dest: "/tmp/{{ item.name }}.env.json"
+    content: "{{ item.env | dict2items | map('combine', {'name': item.key, 'value': item.value}) | list | to_json }}"
+
+- name: Create stack if it does not exist
+  shell: |
+    curl -s -X POST "{{ portainer_url }}/api/stacks?endpointId={{ endpoint_id }}" \
+      -H "Authorization: Bearer {{ portainer_token }}" \
+      -F "Name={{ item.name }}" \
+      -F "StackFile=@/tmp/{{ item.name }}.yml" \
+      -F "Env=@/tmp/{{ item.name }}.env.json;type=application/json" \
+      -F "Method=string" \
+      -F "Type=2"
+  when: existing_stack_id is not defined
+
+- name: Force redeploy if requested
+  uri:
+    url: "{{ portainer_url }}/api/stacks/{{ existing_stack_id }}/redeploy"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ portainer_token }}"
+    status_code: 200
+  when:
+    - existing_stack_id is defined
+    - item.force_redeploy | default(false)
