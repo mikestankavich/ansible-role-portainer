@@ -1,6 +1,7 @@
 - name: Manage Portainer stacks
   vars:
     portainer_url: "{{ portainer_api_url | default('http://localhost:9000') }}"
+    portainer_token: "{{ (auth_token.content|from_json).jwt }}"
   block:
     - name: Loop through defined stacks
       include_tasks: stack_single.yml
