@@ -5,7 +5,7 @@
     - role: geerlingguy.repo-epel
     - role: geerlingguy.pip
     - role: geerlingguy.docker
-    - role: ansible-role-portainer
+    - role: tikalk.portainer
   vars:
     pip_install_packages:
       - name: docker-py
