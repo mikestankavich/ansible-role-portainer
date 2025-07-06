@@ -1,18 +1,33 @@
 ---
 - name: Converge
   hosts: all
+  pre_tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 600
+    - name: Install essential packages
+      apt:
+        name:
+          - curl
+          - docker.io
+        state: present
   roles:
     - role: geerlingguy.pip
-    - role: geerlingguy.docker
+    # Skip Docker role for now due to deprecated parameters
+    # - role: geerlingguy.docker
     - role: tikalk.portainer
   vars:
+    # Pip configuration
     pip_package: python3-pip
     pip_install_packages:
       - name: docker
+    
+    # Portainer configuration  
+    admin_user: admin
+    admin_password: "SuperSecure123!"
     persistent_data_path: /opt/portainer:/data
     company_logo_url: http://example.com/foo.png
     portainer_endpoint: "http://{{ inventory_hostname }}:{{ host_port }}/api"
-    admin_user: admin
-    admin_password: admin
     endpoints:
       - {name: local, url: ""}
