@@ -1,14 +1,15 @@
 ---
 - name: Converge
   hosts: all
+  become: true
   roles:
-    - role: geerlingguy.repo-epel
     - role: geerlingguy.pip
     - role: geerlingguy.docker
     - role: tikalk.portainer
   vars:
+    pip_package: python3-pip
     pip_install_packages:
-      - name: docker-py
+      - name: docker
     persistent_data_path: /opt/portainer:/data
     company_logo_url: http://example.com/foo.png
     portainer_endpoint: "http://{{ inventory_hostname }}:{{ host_port }}/api"
