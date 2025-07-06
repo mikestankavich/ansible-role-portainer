@@ -24,3 +24,6 @@
 
 - include_tasks: registry.yml
   when: configure_registry
+
+- include_tasks: stacks.yml
+  when: portainer_stacks is defined and portainer_stacks | length > 0
