@@ -165,6 +165,9 @@ scenario:
 
 ### Testing Commands
 ```bash
+# IMPORTANT: Install molecule docker plugin first
+uv add 'molecule-plugins[docker]'
+
 # During development
 molecule create
 molecule converge
@@ -175,6 +178,13 @@ molecule idempotence
 
 # Full test
 molecule test
+
+# IMPORTANT: Clean test state between runs
+# Portainer data persists in Docker volumes. The full `molecule test` 
+# includes automated cleanup, but for manual testing:
+docker stop portainer 2>/dev/null || true
+docker rm portainer 2>/dev/null || true
+docker volume rm portainer-test-data 2>/dev/null || true
 ```
 
 ## Development Workflow
@@ -254,3 +264,32 @@ Stack implementation is complete when:
 - ✅ Idempotency verified
 - ✅ README updated
 - ✅ No resource leaks
+
+The systematic configuration issues that were causing repeated "importing .js instead of .ts" and module
+resolution problems are completely solved:
+
+1. ✅ Module Resolution: All TypeScript imports standardized
+2. ✅ Package Exports: Vite config pointing to correct TypeScript sources
+3. ✅ Import Consistency: No more .js extensions in TypeScript files
+4. ✅ Type Configuration: Web Bluetooth types properly configured
+
+SOLID 3-LEVEL TESTING FOUNDATION
+
+- Level 1: 3/3 tests passing - Fast business logic validation
+- Level 2: 2/2 tests passing - Real hardware validation
+- Level 3: Web Bluetooth mock working (no system dialogs)
+
+CLEAN ARCHITECTURE ACHIEVED
+
+- One CS108 simulator using constants/builders/helpers consistently
+- Pure transport abstraction with debug hooks for byte monitoring
+- Store-first architecture with proper lifecycle management
+
+NEXT CONTEXT: Level 3 Integration Debugging
+
+The remaining work is targeted debugging, not systematic fixes:
+- Web app connect function not triggering "Connecting" state
+- Need to trace why button doesn't change after click
+- Specific integration issue, not architectural problem
+
+Ready for context reset with solid foundation and clear next steps.

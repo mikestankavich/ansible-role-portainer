@@ -1,8 +1,8 @@
 portainer_stacks:
   - name: http-echo
-    compose_src: files/http-echo-compose.yml.j2
+    compose_src: http-echo-compose.yml.j2
     env:
-      echo_text: "Hello from Molecule!"
+      echo_text: "Hello from Molecule"
     environment_name: local
     force_redeploy: false
 

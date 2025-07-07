@@ -1,0 +1,17 @@
+---
+- name: Cleanup Portainer test artifacts
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Stop and remove Portainer container
+      docker_container:
+        name: portainer
+        state: absent
+        force_kill: true
+      ignore_errors: true
+
+    - name: Remove Portainer test data volume
+      docker_volume:
+        name: portainer-test-data
+        state: absent
+      ignore_errors: true

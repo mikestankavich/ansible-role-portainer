@@ -25,8 +25,8 @@
     
     # Portainer configuration  
     admin_user: admin
-    admin_password: "SuperSecure123!"
-    persistent_data_path: /opt/portainer:/data
+    admin_password: "SuperSecret_123"
+    persistent_data_path: portainer-test-data:/data
     company_logo_url: http://example.com/foo.png
     portainer_endpoint: "http://{{ inventory_hostname }}:{{ host_port }}/api"
     endpoints:

@@ -26,6 +26,7 @@ scenario:
     - idempotence
     - side_effect
     - verify
+    - cleanup
     - destroy
 verifier:
-  name: testinfra
+  name: ansible

@@ -59,3 +59,49 @@ You can define Docker stacks to deploy using `portainer_stacks`. Each stack will
   roles:
     - geerlingguy.docker
     - portainer
+```
+
+## Testing
+
+This role includes comprehensive testing using Molecule. The tests verify Portainer installation, configuration, and stack deployment functionality.
+
+### Prerequisites
+
+- Docker
+- Python with `uv` package manager
+
+### Running Tests
+
+```bash
+# Install test dependencies
+uv add 'molecule-plugins[docker]'
+
+# Run full test suite (recommended)
+uv run molecule test
+
+# Individual test steps for development
+uv run molecule create     # Create test environment
+uv run molecule converge   # Run the role
+uv run molecule verify     # Run verification tests
+uv run molecule destroy    # Clean up
+
+# Test idempotency
+uv run molecule idempotence
+```
+
+### Test Features
+
+- **Stack Deployment**: Tests HTTP echo service deployment via Portainer API
+- **Environment Variables**: Verifies environment variable injection works correctly  
+- **Idempotency**: Ensures multiple runs don't cause changes
+- **API Compatibility**: Tests against Portainer CE 2.16.x+ JSON API
+- **Automated Cleanup**: Removes persistent Docker volumes between test runs
+
+### Manual Cleanup
+
+If needed, you can manually clean test artifacts:
+
+```bash
+docker stop portainer 2>/dev/null || true
+docker rm portainer 2>/dev/null || true  
+docker volume rm portainer-test-data 2>/dev/null || true
