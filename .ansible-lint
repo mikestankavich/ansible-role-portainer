@@ -1,0 +1,3 @@
+---
+skip_list:
+  - role-name  # Skip role naming check for testing

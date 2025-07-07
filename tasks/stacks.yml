@@ -1,0 +1,10 @@
+- name: Manage Portainer stacks
+  vars:
+    portainer_url: "{{ portainer_endpoint | regex_replace('/api$', '') }}"
+    portainer_token: "{{ (auth_token.content|from_json).jwt }}"
+  block:
+    - name: Loop through defined stacks
+      include_tasks: stack_single.yml
+      loop: "{{ portainer_stacks }}"
+      loop_control:
+        loop_var: item

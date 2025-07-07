@@ -1,0 +1,104 @@
+- name: Resolve endpoint ID from environment_name
+  set_fact:
+    endpoint_id: "{{ portainer_endpoint_ids | selectattr('name', 'equalto', item.environment_name) | map(attribute='id') | first }}"
+
+- name: Get list of existing stacks
+  uri:
+    url: "{{ portainer_url }}/api/stacks"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ portainer_token }}"
+    return_content: true
+  register: existing_stacks
+
+- name: Set stack_id if stack exists
+  set_fact:
+    existing_stack_id: >-
+      {{
+        (existing_stacks.json | selectattr('Name', 'equalto', item.name) | list | first).Id
+        if (existing_stacks.json | selectattr('Name', 'equalto', item.name) | list | length) > 0
+        else None
+      }}
+
+- name: Debug stack information
+  debug:
+    msg: 
+      - "Existing stacks: {{ existing_stacks.json | map(attribute='Name') | list }}"
+      - "Looking for stack: {{ item.name }}"
+      - "Stack ID found: {{ existing_stack_id }}"
+      - "Stack ID is none: {{ existing_stack_id is none }}"
+
+- name: Template the docker-compose file
+  template:
+    src: "{{ item.compose_src }}"
+    dest: "/tmp/{{ item.name }}.yml"
+
+- name: Create environment file for stack
+  copy:
+    dest: "/tmp/{{ item.name }}.env.json"
+    content: >-
+      [
+      {% for env_item in (item.env | default({})) | dict2items %}
+        {"name": "{{ env_item.key }}", "value": "{{ env_item.value }}"}{{ "," if not loop.last else "" }}
+      {% endfor %}
+      ]
+
+- name: Check Portainer version
+  uri:
+    url: "{{ portainer_url }}/api/status"
+    method: GET
+    return_content: true
+  register: portainer_status
+
+- name: Debug Portainer version and endpoint
+  debug:
+    msg: 
+      - "Portainer version: {{ portainer_status.json.Version | default('unknown') }}"
+      - "API URL: {{ portainer_url }}/api/stacks/create/standalone/file?endpointId={{ endpoint_id }}"
+
+- name: Read compose file content
+  slurp:
+    src: "/tmp/{{ item.name }}.yml"
+  register: compose_content
+  when: existing_stack_id is none or existing_stack_id is not defined or existing_stack_id == ""
+
+- name: Read environment file content
+  slurp:
+    src: "/tmp/{{ item.name }}.env.json"
+  register: env_content
+  when: existing_stack_id is none or existing_stack_id is not defined or existing_stack_id == ""
+
+- name: Create stack if it does not exist (Portainer 2.16.x compatible)
+  uri:
+    url: "{{ portainer_url }}/api/stacks?type=2&method=string&endpointId={{ endpoint_id }}"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ portainer_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      Name: "{{ item.name }}"
+      StackFileContent: "{{ compose_content.content | b64decode }}"
+      Env: "{{ env_content.content | b64decode | from_json }}"
+    return_content: true
+    status_code: [200, 201]
+  when: existing_stack_id is none or existing_stack_id is not defined or existing_stack_id == ""
+  register: stack_creation_result
+
+- name: Debug stack creation result
+  debug:
+    msg: 
+      - "Stack creation status: {{ stack_creation_result.status | default('N/A') }}"
+      - "Stack creation response: {{ stack_creation_result.json | default('N/A') }}"
+  when: stack_creation_result is defined
+
+- name: Force redeploy if requested
+  uri:
+    url: "{{ portainer_url }}/api/stacks/{{ existing_stack_id }}/redeploy"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ portainer_token }}"
+    status_code: 200
+  when:
+    - existing_stack_id is defined
+    - item.force_redeploy | default(false)

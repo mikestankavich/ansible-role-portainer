@@ -1,0 +1,11 @@
+# Managed by Ansible on {{ ansible_date_time.iso8601 }}
+version: '3'
+
+services:
+  echo:
+    image: hashicorp/http-echo:0.2.3
+    command: ["-text=${echo_text:-Hello from Portainer Stack}"]
+    ports:
+      - "5678:5678"
+    labels:
+      com.ansible.managed: "true"

@@ -1,0 +1,11 @@
+portainer_stacks:
+  - name: http-echo
+    compose_src: http-echo-compose.yml.j2
+    env:
+      echo_text: "Hello from Molecule"
+    environment_name: local
+    force_redeploy: false
+
+endpoints:
+  - name: local
+    url: unix:///var/run/docker.sock
