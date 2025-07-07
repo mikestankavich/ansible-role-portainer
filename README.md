@@ -5,7 +5,7 @@ Portainer - the coolest UI for Docker http://portainer.io/
 This role installs Portainer using a Docker container and optionally configures endpoints, users, settings, registries, and application stacks.
 
 ## Tasks in Role
-- Ensure docker-py is present using pip
+- Ensure docker python package is available for Ansible Docker modules
 - Remove existing container [if `remove_existing_container: true`]
 - Remove persistent data [if `remove_persistent_data: true`]
 - Deploy Portainer container to host [define `persistent_data_path`]
@@ -46,6 +46,8 @@ You can define Docker stacks to deploy using `portainer_stacks`. Each stack will
 - hosts: myhosts
   become: true
   vars:
+    pip_install_packages:
+      - name: docker
     endpoints:
       - name: local
         url: unix:///var/run/docker.sock
@@ -58,6 +60,7 @@ You can define Docker stacks to deploy using `portainer_stacks`. Each stack will
         force_redeploy: false
   roles:
     - geerlingguy.docker
+    - geerlingguy.pip
     - portainer
 ```
 
