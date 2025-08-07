@@ -1,3 +1,4 @@
+---
 - name: Manage Portainer stacks
   vars:
     portainer_url: "{{ portainer_endpoint | regex_replace('/api$', '') }}"
