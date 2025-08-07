@@ -33,6 +33,7 @@ This role installs Portainer using a Docker container and optionally configures 
 | `auth_method` | use LDAP or standalone [2 for ldap, 1 for standalone] | 1 |
 | `registry_type` | 1 (Quay.io), 2 (Azure container registry) or 3 (custom registry) | 3 |
 | `version` | Portainer version to use | latest |
+| `portainer_stack_deployment_timeout` | Timeout in seconds for stack deployment operations | 300 |
 
 *See `defaults/main.yml` for a complete list*
 

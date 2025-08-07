@@ -29,19 +29,23 @@
       - "Stack ID is none: {{ existing_stack_id is none }}"
 
 - name: Template the docker-compose file
-  template:
+  ansible.builtin.template:
     src: "{{ item.compose_src }}"
     dest: "/tmp/{{ item.name }}.yml"
+    mode: '0644'
+  when: existing_stack_id is none or existing_stack_id is not defined or existing_stack_id == ""
 
 - name: Create environment file for stack
-  copy:
+  ansible.builtin.copy:
     dest: "/tmp/{{ item.name }}.env.json"
+    mode: '0644'
     content: >-
       [
       {% for env_item in (item.env | default({})) | dict2items %}
         {"name": "{{ env_item.key }}", "value": "{{ env_item.value }}"}{{ "," if not loop.last else "" }}
       {% endfor %}
       ]
+  when: existing_stack_id is none or existing_stack_id is not defined or existing_stack_id == ""
 
 - name: Check Portainer version
   uri:
@@ -52,7 +56,7 @@
 
 - name: Debug Portainer version and endpoint
   debug:
-    msg: 
+    msg:
       - "Portainer version: {{ portainer_status.json.Version | default('unknown') }}"
       - "API URL: {{ portainer_url }}/api/stacks/create/standalone/file?endpointId={{ endpoint_id }}"
 
@@ -82,12 +86,13 @@
       Env: "{{ env_content.content | b64decode | from_json }}"
     return_content: true
     status_code: [200, 201]
+    timeout: "{{ portainer_stack_deployment_timeout }}"
   when: existing_stack_id is none or existing_stack_id is not defined or existing_stack_id == ""
   register: stack_creation_result
 
 - name: Debug stack creation result
   debug:
-    msg: 
+    msg:
       - "Stack creation status: {{ stack_creation_result.status | default('N/A') }}"
       - "Stack creation response: {{ stack_creation_result.json | default('N/A') }}"
   when: stack_creation_result is defined
@@ -99,6 +104,18 @@
     headers:
       Authorization: "Bearer {{ portainer_token }}"
     status_code: 200
+    timeout: "{{ portainer_stack_deployment_timeout }}"
   when:
     - existing_stack_id is defined
     - item.force_redeploy | default(false)
+
+- name: Clean up temporary files
+  file:
+    path: "{{ temp_file }}"
+    state: absent
+  loop:
+    - "/tmp/{{ item.name }}.yml"
+    - "/tmp/{{ item.name }}.env.json"
+  loop_control:
+    loop_var: temp_file
+  when: existing_stack_id is none or existing_stack_id is not defined or existing_stack_id == ""

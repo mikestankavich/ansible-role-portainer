@@ -6,7 +6,7 @@ remove_persistent_data: false
 remove_existing_container: false
 persistent_data_path: /opt/portainer:/data
 container_image: portainer/portainer:{{ version }}
-container_name: portainer 
+container_name: portainer
 container_labels: {}
 container_network:
 container_restart_policy: always
@@ -58,6 +58,9 @@ registry_auth: false
 registry_type: 3
 registry_username: username
 registry_password: password
+
+# Stack deployment timeout (seconds)
+portainer_stack_deployment_timeout: 300
 
 # Add Portainer stacks (optional)
 portainer_stacks:
